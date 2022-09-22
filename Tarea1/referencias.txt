@@ -1,0 +1,2 @@
+split: https://cplusplus.com/reference/cstring/strtok/
+strcpy: https://www.tutorialspoint.com/c_standard_library/c_function_strcpy.htm
