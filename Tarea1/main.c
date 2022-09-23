@@ -68,5 +68,6 @@ int main(){
     wait(NULL); //El padre espera a que termine el proceso hijo
     wait(NULL); //El padre espera a que termine el proceso hijo
     printf("Soy el padre, mi hijos eran el PID: %d y el PID: %d, yo soy el PID: %d\n",of1,of2,getpid());
+	//imprimir suma
     return 0;    
 }
