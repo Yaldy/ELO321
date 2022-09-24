@@ -19,7 +19,7 @@ int main(){
         return 1;
     }
     else if (of1 == 0){ //Este es el proceso hijo 1
-        //printf("Soy el proceso hijo 1, mi PID es %d\n",getpid());
+        //printf("Soy el repartidor 1, mi PID es %d\n",getpid());
         int buffer[2]; //Variable para lectura
         close(tuberia[1]); //Cerramos el lado de escritura del pipe
         int i = 0;
@@ -62,12 +62,14 @@ int main(){
 		espera a que los hijos terminen
 		imprime suma
 		*/
+	// crear arreglo de codigos (int)
+	// crear variables con el nombre d elos archivos (argv[])
     int buffer[100]={1,10,1,30,2,10,5,1,5,1,4,2,5,10,0,10,0,11};		
     close(tuberia[0]); //Cerramos el lado de lectura del pipe
     write(tuberia[1],buffer,sizeof(int)*100); //Escribimos en el pipe los datos
     wait(NULL); //El padre espera a que termine el proceso hijo
     wait(NULL); //El padre espera a que termine el proceso hijo
     printf("Soy el padre, mi hijos eran el PID: %d y el PID: %d, yo soy el PID: %d\n",of1,of2,getpid());
-	//imprimir suma
+	//imprimir suma despues de que os dos hijois terminen (wait x2)
     return 0;    
 }

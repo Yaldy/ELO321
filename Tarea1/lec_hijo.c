@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DISPONIBLE "disponible.txt"
+#define PEDIDOS "pedidos.txt"
+
 struct producto{
   char descripcion[30];
   int precio;

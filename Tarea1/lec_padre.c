@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 struct producto{
   char descripcion[30];
   int precio;
@@ -9,16 +10,7 @@ struct producto{
   int tiempo;
 };
 
-struct producto lec_padre(char descrin[]);
-
-/*prueba
-void main(){
-  struct producto prodtest;
-  prodtest=lec_padre("Chocolate ");
-  printf("%s\n", prodtest.descripcion);
-}*/
-
-struct producto lec_padre(char descrin[]) //param: char que se está buscando
+struct producto lec_padre(char descrin[], char* file_disponible) //param: char que se está buscando
 {
   FILE* ptr; // se declara puntero para arreglo donde se guarda lo que esta en el .txt
   char ch;
@@ -27,7 +19,7 @@ struct producto lec_padre(char descrin[]) //param: char que se está buscando
   int a = 0;
   struct producto prod;
   //producto *Pprod = &prod;
-  ptr = fopen("test.txt", "r");
+  ptr = fopen(file_disponible, "r");
   if (NULL == ptr) {
     printf("file can't be opened \n");
   }
