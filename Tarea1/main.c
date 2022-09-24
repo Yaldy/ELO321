@@ -2,6 +2,16 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define DISPONIBLE "disponible.txt"
+#define PEDIDOS "pedidos.txt"
+
+struct producto{
+  char descripcion[30];
+  int precio;
+  int codigo;
+  int tiempo;
+};
+
 int main(){
 	/*PADRE:
 		1. lee archivo de pedidos y crea array
@@ -9,6 +19,8 @@ int main(){
 		3. imprime por pantalla cada producto con su precio
 		4. leer e imprimir todos los productos disponibles
 	*/
+	//extraer datos de argc y argv
+	
     pid_t of1,of2; //Creamos el pid para guardar el retorno del fork
     int tuberia[2];	//Creamos la variable para el pipe  
     pipe(tuberia);  //Creamos el pipe
@@ -20,18 +32,23 @@ int main(){
     }
     else if (of1 == 0){ //Este es el proceso hijo 1
         //printf("Soy el repartidor 1, mi PID es %d\n",getpid());
-        int buffer[2]; //Variable para lectura
+        int codigo1; //Variable para lectura
         close(tuberia[1]); //Cerramos el lado de escritura del pipe
         int i = 0;
+		struct producto prod; //creear variable struct
+        int r=0;//return read
         while(1){
-            read(tuberia[0],buffer,2*sizeof(int)); //Leemos datos del pipe, dos int cada vez
+            r = read(tuberia[0],&codigo1,sizeof(int)); //Leemos datos del pipe
+            //printf("el codigo es %d\n",codigo1);
             i++;
-            if (buffer[0]==0){ //Queremos leer 9 veces
+            if (r==0){ //Queremos leer 9 veces
                 break;
             }
             //printf("hijo1: n1: %d y n2: %d, i= %d\n",buffer[0],buffer[1],i);
-            usleep(5);
+			prod = lec_hijo(codigo1,DISPONIBLE);
+            usleep(prod.tiempo);
 			// por aca tiene que decir quien es y que está entregando
+			printf("Soy el repartidor 1 y entrego %s.\n", prod.descripcion);
         }
         return 0;
     }
@@ -42,18 +59,26 @@ int main(){
         return 1;
     }
     else if (of2 == 0){ //Este es el proceso hijo 2
-        //printf("Soy el proceso hijo 2, mi PID es %d\n",getpid());
-        int buffer[2]; //Variable para lectura
+        //printf("Soy el repartidor 2, mi PID es %d\n",getpid());
+        int codigo2; //Variable para lectura
         close(tuberia[1]); //Cerramos el lado de escritura del pipe
         int i = 0;
+		struct producto prod; //creear variable struct
+        int r=0;//return read
         while(1){
-            read(tuberia[0],buffer,2*sizeof(int)); //Leemos datos del pipe, dos int cada vez
+            r = read(tuberia[0],&codigo2,sizeof(int)); //Leemos datos del pipe
+            //printf("el codigo es %d\n",codigo2);
             i++;
-            if (buffer[0]==0){ //Queremos leer 9 veces
+            printf("%d\n",r);
+            if (r==0){ //Queremos leer 9 veces
+                printf("bi");
                 break;
             }
-            //printf("hijo2: n1: %d y n2: %d, i= %d\n",buffer[0],buffer[1],i);
-            usleep(5);
+            //printf("hijo1: n1: %d y n2: %d, i= %d\n",buffer[0],buffer[1],i);
+			prod = lec_hijo(codigo2,DISPONIBLE);
+            usleep(prod.tiempo);
+			// por aca tiene que decir quien es y que está entregando
+			printf("Soy el repartidor 2 y entrego %s.\n", prod.descripcion);
         }
         return 0;
     }
@@ -64,9 +89,9 @@ int main(){
 		*/
 	// crear arreglo de codigos (int)
 	// crear variables con el nombre d elos archivos (argv[])
-    int buffer[100]={1,10,1,30,2,10,5,1,5,1,4,2,5,10,0,10,0,11};		
+    int buffer[20]={3,4,1,2,6,3,1,5,4,2};
     close(tuberia[0]); //Cerramos el lado de lectura del pipe
-    write(tuberia[1],buffer,sizeof(int)*100); //Escribimos en el pipe los datos
+    write(tuberia[1],buffer,sizeof(int)*20); //Escribimos en el pipe los datos
     wait(NULL); //El padre espera a que termine el proceso hijo
     wait(NULL); //El padre espera a que termine el proceso hijo
     printf("Soy el padre, mi hijos eran el PID: %d y el PID: %d, yo soy el PID: %d\n",of1,of2,getpid());

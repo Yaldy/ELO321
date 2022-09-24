@@ -35,9 +35,9 @@ int padre(int codigos[], char* file_pedidos, char* file_disponible){//arg punter
 			codigos[i]=prod.codigo;
 			//printf("debug: palabra= %s, desc= %s, codigo = %d\n", palabra, prod.descripcion, prod.codigo);
 			suma+=prod.precio;
-			// printear "tu pedido es ble y cuenta bla"
+			printf("El producto %s tiene un valor de %d.\n",prod.descripcion,prod.precio);
 			a=0;
-      memset(palabra,'\0',sizeof(palabra));
+			memset(palabra,'\0',sizeof(palabra));
 			i++;
 		}
 		else{	

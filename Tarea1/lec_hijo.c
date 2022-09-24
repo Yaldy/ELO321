@@ -6,10 +6,10 @@
 #define PEDIDOS "pedidos.txt"
 
 struct producto{
-  char descripcion[30];
-  int precio;
-  int codigo;
-  int tiempo;
+	char descripcion[30];
+	int precio;
+	int codigo;
+	int tiempo;
 };
 
 struct producto lec_hijo(int codin);
@@ -21,19 +21,19 @@ void main(){
   printf("%s\n", prodtest.descripcion);
 }*/
 
-struct producto lec_hijo(int codin) //param: char que se está buscando
+struct producto lec_hijo(int codin, char* file_disponible) //param: char que se está buscando
 {
-  FILE* ptr; // se declara puntero para arreglo donde se guarda lo que esta en el .txt
-  char ch;
-  char *s; // puntero para split
-  char texto[100]; // array para guardar linea
-  int a = 0;
-  struct producto prod;
-  //producto *Pprod = &prod;
-  ptr = fopen("test.txt", "r");
-  if (NULL == ptr) {
-    printf("file can't be opened \n");
-  }
+	FILE* ptr; // se declara puntero para arreglo donde se guarda lo que esta en el .txt
+	char ch;
+	char *s; // puntero para split
+	char texto[100]; // array para guardar linea
+	int a = 0;
+	struct producto prod;
+	//producto *Pprod = &prod;
+	ptr = fopen(file_disponible, "r");
+	if (NULL == ptr) {
+		printf("file can't be opened \n");
+	}
 
   // se leen la linea del archivo de texto
   while(!feof(ptr)){
