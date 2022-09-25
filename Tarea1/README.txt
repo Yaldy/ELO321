@@ -12,7 +12,10 @@ El programa se debe compilar y ejecutar de la siguiente forma
 Si el nombre de los archivos .txt son distintos, modificar al momento de ejecutar
 
 Suposiciones:
-	- los código son todos numeros mayores a cero.
+	- los código de los productos son todos numeros mayores a cero.
+	- el archivo de productos disponibles no tiene ningún salto de linea extra.
+	- no hay espacio entre las comas y las palabra en ninguno de los das archivos.
+	- case sensitive (mayusculas y minusculas se consideran letras distintas).
 
 Fuentes:
 	- split: https://cplusplus.com/reference/cstring/strtok/
