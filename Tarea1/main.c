@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DISPONIBLE "disponible.txt"
-#define PEDIDOS "pedidos.txt"
+#include "funciones.h"
 
 struct producto{
   char descripcion[30];
@@ -106,3 +105,4 @@ int main(int argc, char *argv[]){
     //printf("Que le vaya bn :3\n");
     return 0;  
 }
+
