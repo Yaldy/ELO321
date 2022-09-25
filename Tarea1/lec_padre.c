@@ -17,6 +17,7 @@ struct producto lec_padre(char descrin[], char* file_disponible) //param: char q
   char *s; // puntero para split
   char texto[100]; // array para guardar linea
   int a = 0;
+  int flag = 0; // flag para mmm para verificar si encuentra eeeel el cosop o ya
   struct producto prod;
   //producto *Pprod = &prod;
   ptr = fopen(file_disponible, "r");
@@ -47,16 +48,23 @@ struct producto lec_padre(char descrin[], char* file_disponible) //param: char q
     
     // comparar el argumento con la desc actual
     if (strcmp(prod.descripcion,descrin)==0){
+      flag = 1;
       break;
     }
-    
     //printf("%s\n", prod.descripcion);
     }
     a++;
   }
- // printf("%s\n", texto);
-
+  if(flag == 0){
+      //memset(prod.descripcion,'\0',sizeof(prod.descripcion));
+      //prod.descripcion = {'e','r','r','o','r','\0'} ;
+      prod.precio = 0;
+      prod.codigo = 0;
+      prod.tiempo = 0;
+  }
+  // printf("%s\n", texto);
   // Closing the file
+  //printf("s: %s\n",prod.descripcion);
   fclose(ptr);
   return prod;
 }

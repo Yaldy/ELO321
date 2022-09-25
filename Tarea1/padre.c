@@ -17,6 +17,7 @@ int padre(int codigos[], char* file_pedidos, char* file_disponible){//arg punter
 	FILE* ptr; // se declara puntero para arreglo donde se guarda lo que esta en el .txt
 	char ch;
 	char palabra[100]; // array para guardar linea
+	memset(palabra,'\0',sizeof(palabra));
 	int a = 0;
 	struct producto prod;
 	//producto *Pprod = &prod;
@@ -29,19 +30,24 @@ int padre(int codigos[], char* file_pedidos, char* file_disponible){//arg punter
 	int i = 0; //indice de arreglo codigos
 	do{
 		ch = fgetc(ptr); // lee un caracter del archivo de texto
-		
-		if(ch==',' || feof(ptr)){ //guarda caracteres hasta que encuentra una coma
+		if(ch == ','|| feof(ptr) ){ //guarda caracteres hasta que encuentra una coma
 			prod = lec_padre(palabra, file_disponible); //busca descripción en file disponible
+			// preguntar si el prod no es de error
+			if(prod.precio == 0){
+			  printf("El producto %s no esta disponible.\n", palabra);
+			}else{
 			codigos[i]=prod.codigo;
 			//printf("debug: palabra= %s, desc= %s, codigo = %d\n", palabra, prod.descripcion, prod.codigo);
 			suma+=prod.precio;
 			printf("El producto %s tiene un valor de %d.\n",prod.descripcion,prod.precio);
-			a=0;
-			memset(palabra,'\0',sizeof(palabra));
 			i++;
+			}
+			a = 0;
+			memset(palabra,'\0',sizeof(palabra));
 		}
-		else{	
+		else if (ch != '\n'){	
 			palabra[a] = ch;
+			//printf("ch: %d\n",(int)(ch));
 			a++;
 		}
 	}while(!feof(ptr));

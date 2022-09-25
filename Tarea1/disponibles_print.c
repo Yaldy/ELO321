@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void diponibles_print(char* file_disponible) //param: char que se está buscando
+void disponibles_print(char* file_disponible) //param: char que se está buscando
 {
 	FILE* ptr; // se declara puntero para arreglo donde se guarda lo que esta en el .txt	
 	char ch;
