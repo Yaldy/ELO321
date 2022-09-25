@@ -1,26 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define DISPONIBLE "disponible.txt"
-#define PEDIDOS "pedidos.txt"
-
-struct producto{
-	char descripcion[30];
-	int precio;
-	int codigo;
-	int tiempo;
-};
-
-struct producto lec_hijo(int codin);
-
-/*prueba
-void main(){
-  struct producto prodtest;
-  prodtest=lec_hijo(5);
-  printf("%s\n", prodtest.descripcion);
-}*/
-
 struct producto lec_hijo(int codin, char* file_disponible) //param: char que se está buscando
 {
 	FILE* ptr; // se declara puntero para arreglo donde se guarda lo que esta en el .txt
@@ -39,7 +16,7 @@ struct producto lec_hijo(int codin, char* file_disponible) //param: char que se 
   while(!feof(ptr)){
     ch = fgetc(ptr); // lee un caracter del archivo de texto
     texto[a] = ch;
-    if(texto[a] == '\n'){ // si hay salto de linea, se sale del while
+    if(texto[a] == '\n'||feof(ptr)){ // si hay salto de linea, se sale del while
       a = -1;
       // se guardan los datos ordenados en un struct
       s = strtok(texto, ",");

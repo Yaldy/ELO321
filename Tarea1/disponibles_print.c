@@ -17,9 +17,10 @@ void disponibles_print(char* file_disponible) //param: char que se está buscand
 	printf("Los productos disponibles son:\n");
 	// se leen la linea del archivo de texto
 	while(!feof(ptr)){
+   //while(fgetc(ptr)!=-1){
 		ch = fgetc(ptr); // lee un caracter del archivo de texto
 		texto[a] = ch;
-		if(texto[a] == '\n'){ // si hay salto de linea, se sale del while
+		if(texto[a] == '\n'||feof(ptr)){ // si hay salto de linea, se sale del while
 			a = -1;
 			s = strtok(texto, ",");
 			printf("%s\n", s);

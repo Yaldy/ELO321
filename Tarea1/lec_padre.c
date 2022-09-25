@@ -29,7 +29,7 @@ struct producto lec_padre(char descrin[], char* file_disponible) //param: char q
   while(!feof(ptr)){
     ch = fgetc(ptr); // lee un caracter del archivo de texto
     texto[a] = ch;
-    if(texto[a] == '\n'){ // si hay salto de linea, se sale del while
+    if(texto[a] == '\n'||feof(ptr)){ // si hay salto de linea, se sale del while
       a = -1;
       // se guardan los datos ordenados en un struct
       s = strtok(texto, ",");
@@ -55,9 +55,10 @@ struct producto lec_padre(char descrin[], char* file_disponible) //param: char q
     }
     a++;
   }
-  if(flag == 0){
+     if(flag == 0){
       //memset(prod.descripcion,'\0',sizeof(prod.descripcion));
       //prod.descripcion = {'e','r','r','o','r','\0'} ;
+      strcpy(prod.descripcion,"error");
       prod.precio = 0;
       prod.codigo = 0;
       prod.tiempo = 0;
