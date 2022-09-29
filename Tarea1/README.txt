@@ -1,4 +1,4 @@
-Tarea 1 ELO321 2022-2
+gcTarea 1 ELO321 2022-2
 
 Natalia Vega Quinteros ROL: 201904501-6
 Oscar Villarroel Quezada ROL: 201804615-9
