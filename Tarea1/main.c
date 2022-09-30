@@ -16,8 +16,15 @@ struct producto{
 
 int main(int argc, char *argv[]){
 	int codigos[100];
+	
+	//inicializar arreglo para evitar problemas
+	int ini = 0;
+	for (ini;ini < 100; ini++){
+		codigos[ini] = 0;
+	}
+	
 	int suma;
-	int i;
+	//int i;
 	char* archivo_disp = argv[1];
 	char* archivo_ped = argv[2];
 	disponibles_print(archivo_disp);
@@ -80,7 +87,7 @@ int main(int argc, char *argv[]){
     wait(NULL); //El padre espera a que termine el proceso hijo 1
     wait(NULL); //El padre espera a que termine el proceso hijo 2
     printf("\n");
-    printf("El total recaudado es $%d\n", suma);
+    printf("El total recaudado es $%d.\n", suma);
     return 0;  
 }
 
