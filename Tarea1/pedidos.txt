@@ -1,1 +1,1 @@
-Agua,Brownie,Naranja,Chocolate,Sandwich,Cafe,Pepsi,Cigarrilos,Alfajor,Jugo,Tacos,Agua,Brownie,Chocolate,Sandwich,Cafe,Pepsi,Cigarrilos,Jugo,Completos,Tacos,Agua,Brownie,Chocolate,Sandwich,Cafe,Pepsi,Cigarrilos,Jugo,Tacos,Agua,Brownie,Chocolate,Sandwich,Cafe,Pepsi,Manzana,Cigarrilos,Jugo,Tacos
+Agua,Brownie,Naranja,Chocolate,Alfajor,Jugo,Tacos,Agua,Brownie,Jugo,Completos,Agua,Brownie,Chocolate,Pepsi,Manzana,Cigarrilos,Jugo
