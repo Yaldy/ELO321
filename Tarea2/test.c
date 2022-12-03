@@ -1,3 +1,5 @@
+/*ya tiene while1, algo queda abierto*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -125,12 +127,13 @@ void *printer(void* arg)
 	
 	//close(arr[1]);
 	impresion prnt[3];//estructura para guardar datos extraidos de archivo
-    
+	impresion fin;
+
     do{
-    	
     	int cprim = 0; //contador para ver si entra por primera vez
     	int sem2Val; //variable con valor del semaforo
-    	sem_getvalue(&sem2,&sem2Val);//guarda valor del semaforo
+    	int sem3Val; //variable con valor del semaforo
+		sem_getvalue(&sem2,&sem2Val);//guarda valor del semaforo
     	//printf("%d\n",sem2Val);
     	if(sem2Val==0)
 	    	while(1){//espera ocupada
@@ -147,7 +150,7 @@ void *printer(void* arg)
 					int o = 3;
 					
 					for(o;o>0;o--){
-						usleep(100);//1 seg es mucha espera
+						usleep(1000);//1 seg es mucha espera
 						sem_wait(&scons);
 						printf("impresora prendiendo en: %d\n",o);	
 						sem_post(&scons);	
@@ -175,7 +178,10 @@ void *printer(void* arg)
 					printf("Impresora: Finalizado, el pedido tardo %d us\n",150*prnt[i].pages);
 					sem_post(&scons);
 					fflush(stdout);
-				//	write(imp_srv[1], &prnt[i], sizeof(impresion));
+					write(imp_srv[1], &prnt[i], sizeof(impresion));
+					sem_post(&sem3);
+					sem_getvalue(&sem3,&sem3Val);//guarda valor del semaforo
+					//printf("%d\n",sem3Val);
 				}
 			}
 			
@@ -183,7 +189,10 @@ void *printer(void* arg)
 		}
 	}while(prnt[0].pages !=-1);
     
-	
+    /*envia estructura indicando el final de los pedidos*/
+    fin.pages =-1;//valor invalido para avisar fin de los pedidos
+	write(imp_srv[1], &fin, sizeof(impresion));
+	sem_post(&sem3);
     printf("Thread Printer termino...\n");
     
     
@@ -196,7 +205,7 @@ int main()
 	int srv_imp[2];
 	int imp_srv[2];	
 	*/
-	
+	int flags1=1;
 	/*inicialización de pipes*/
 	pipe(usr_srv);
 	pipe(srv_imp);
@@ -209,8 +218,9 @@ int main()
 	sem_init(&scons, 0, 1);
     sem_init(&sem1, 0, 0);
 	sem_init(&sem2, 0, 0);
-	//sem_init(&mutex, 0, 0);
-
+	sem_init(&sem3, 0, 0);
+	
+	int sem3Val;
 
 	
 	/*variables para los threads*/
@@ -231,58 +241,68 @@ int main()
 	queue_init(queue); //rellena cola de valores no validos
 	
 	int i =0;
-	do{
-		sem_wait(&sem1);
-		read(usr_srv[0], &arg, sizeof(impresion)); //lee pipe usr_srv
-		
-		if(arg.pages >0 ){
-		
-			queue[i]=arg;
-			if (i==2 || arg.urgent=='S'){
-				/*mandar cola a impresora*/
-				write(srv_imp[1], queue, 3*sizeof(impresion));// escribe en pipe srv-imp
-				sem_post(&sem2);
-				i=0;
-				queue_init(queue);
+	while(1){
+		if (flags1){
+			sem_wait(&sem1);
+			read(usr_srv[0], &arg, sizeof(impresion)); //lee pipe usr_srv
+			
+			if(arg.pages >0 ){
+			
+				queue[i]=arg;
+				if (i==2 || arg.urgent=='S'){
+					/*mandar cola a impresora*/
+					write(srv_imp[1], queue, 3*sizeof(impresion));// escribe en pipe srv-imp
+					sem_post(&sem2);
+					i=0;
+					queue_init(queue);
+				}
+				//else if(){}
+				else{
+					i++;
+				}
+				
 			}
-			//else if(){}
 			else{
-				i++;
+				write(srv_imp[1], queue, 3*sizeof(impresion));
+				sem_post(&sem2);
+				/*envia estructura indicando el final de los pedidos*/
+				queue[0].pages=-1;
+				write(srv_imp[1], queue, 3*sizeof(impresion));
+				sem_post(&sem2);
+				flags1=0;
 			}
-			sem_wait(&scons);
-			printf("server: %d\n", arg.pages);
-			sem_post(&scons);
 		}
-		else{
-			write(srv_imp[1], queue, 3*sizeof(impresion));
-			sem_post(&sem2);
+		sem_getvalue(&sem3,&sem3Val);
+		//printf("%d\n",sem3Val);
+		if(sem3Val>0){
+			read(imp_srv[0], &plisto, sizeof(impresion));
+			
+			if(plisto.pages==-1){
+				break;
+			}
+			
+			if(plisto.type == 'B'){
+				sem_wait(&scons);
+				printf("Server: Pedido blanco y negro, %d paginas esta listo. Monto a pagar:%d\n",plisto.pages, 10*plisto.pages);
+				sem_post(&scons);
+				fflush(stdout);	
+			}
+			else if (plisto.type == 'C'){
+				sem_wait(&scons);
+				printf("Server: Pedido color, %d paginas esta listo. Monto a pagar: %d\n",plisto.pages, 20*plisto.pages);
+				sem_post(&scons);
+				fflush(stdout);	
+			}
+			sem_trywait(&sem3);
+			//printf("pasa\n");
 		}
-		/*
-		read(imp_srv[0], &plisto, sizeof(impresion));
-		
-		/*
-		if(plisto.pages==-1){
-			break;
-		}
-		if(plisto.type == 'B'){
-			sem_wait(&scons);
-			printf("Server: Pediodo blanco y negro, %d paginas esta listo. Monto a pagar:%d\n",plisto.pages, 10*plisto.pages);
-			sem_post(&scons);
-			fflush(stdout);	
-		}
-		else if (plisto.type == 'C'){
-			sem_wait(&scons);
-			printf("Server: Pedidio color, %d paginas esta listo. Monto a pagar: %d\n",plisto.pages, 20*plisto.pages);
-			sem_post(&scons);
-			fflush(stdout);	
-		}*/
 
-	}while(arg.pages >0 );
+	}
 	
-	/*envia estructura indicando el final de los pedidos*/
+	/*envia estructura indicando el final de los pedidos
 	queue[0].pages=-1;
 	write(srv_imp[1], queue, 3*sizeof(impresion));
-	sem_post(&sem2);
+	sem_post(&sem2);*/
 	
 	/*termina los threads*/
     pthread_join(t1,NULL);
@@ -293,6 +313,6 @@ int main()
     sem_destroy(&sem1);
     sem_destroy(&sem2);
     //sem_destroy(&sem3);
-	
+	printf("Proceso servidor termino\n");
     return 0;
 }
