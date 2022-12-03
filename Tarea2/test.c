@@ -52,28 +52,36 @@ void *user(void* arg) // pagina 170 OS_Concepts
 			prnt.pages = atoi(strtok(NULL,","));
 			prnt.urgent = strtok(NULL,",")[0];
 			
-			sem_wait(&scons);
+			//sem_wait(&scons);
 			if(prnt.type == 'B' && prnt.urgent == 'N'){
+				sem_wait(&scons);
 				printf("Blanco y Negro, %d paginas, no urgente, tiempo de envio %d [us]\n",prnt.pages, 100*prnt.pages);
+				sem_post(&scons);
 				fflush(stdout);	
 				usleep(100*prnt.pages);
 			}
 			else if(prnt.type == 'B' && prnt.urgent == 'S'){
+				sem_wait(&scons);
 				printf("Blanco y Negro, %d paginas, urgente, tiempo de envio %d [us]\n",prnt.pages, 100*prnt.pages);
+				sem_post(&scons);
 				fflush(stdout);	
 				usleep(100*prnt.pages);
 			}
 			else if (prnt.type == 'C' && prnt.urgent == 'N'){
+				sem_wait(&scons);
 				printf("Color, %d paginas, no urgente, tiempo de envio %d [us]\n",prnt.pages, 200*prnt.pages);
+				sem_post(&scons);
 				fflush(stdout);	
 				usleep(200*prnt.pages);
 			}
 			else if (prnt.type == 'C' && prnt.urgent == 'S'){
+				sem_wait(&scons);
 				printf("Color, %d paginas, urgente, tiempo de envio %d [us]\n",prnt.pages, 200*prnt.pages);
+				sem_post(&scons);	
 				fflush(stdout);	
 				usleep(200*prnt.pages);
 			}
-			sem_post(&scons);
+			//sem_post(&scons);
 			
 			memset(texto, '\0', sizeof(texto));
 			a = -1;
@@ -83,7 +91,7 @@ void *user(void* arg) // pagina 170 OS_Concepts
 			write(arr[1], &prnt, sizeof(impresion));
 			sem_post(&sem1);
 			//printf("user :%d\n", prnt.pages);
-			usleep(10000);
+			//usleep(1000);
     	}
 		a++;
 	}
@@ -200,8 +208,9 @@ int main()
 			else{
 				i++;
 			}
-			
+			sem_wait(&scons);
 			printf("server: %d\n", arg.pages);
+			sem_post(&scons);
 		}
 		else{
 			//sem_wait(&mutex);
