@@ -11,6 +11,12 @@ typedef struct impresion{
 	char urgent;
 }impresion;
 
+
+int usr_srv[2];
+int srv_imp[2];
+int imp_srv[2];	
+
+
 sem_t scons; //escribir en consola
 sem_t sem1; //pipe user server
 sem_t sem2; //pipe server impresora
@@ -25,7 +31,7 @@ void queue_init(impresion queue[]){
 
 void *user(void* arg) // pagina 170 OS_Concepts
 {   
-	
+	printf("Entra al user\n");
 	int *arr = (int*) arg;
 	//close(arr[0]);
 	impresion prnt;
@@ -55,28 +61,28 @@ void *user(void* arg) // pagina 170 OS_Concepts
 			//sem_wait(&scons);
 			if(prnt.type == 'B' && prnt.urgent == 'N'){
 				sem_wait(&scons);
-				printf("Blanco y Negro, %d paginas, no urgente, tiempo de envio %d [us]\n",prnt.pages, 100*prnt.pages);
+				printf("User: Blanco y Negro, %d paginas, no urgente, tiempo de envio %d [us]\n",prnt.pages, 100*prnt.pages);
 				sem_post(&scons);
 				fflush(stdout);	
 				usleep(100*prnt.pages);
 			}
 			else if(prnt.type == 'B' && prnt.urgent == 'S'){
 				sem_wait(&scons);
-				printf("Blanco y Negro, %d paginas, urgente, tiempo de envio %d [us]\n",prnt.pages, 100*prnt.pages);
+				printf("User: Blanco y Negro, %d paginas, urgente, tiempo de envio %d [us]\n",prnt.pages, 100*prnt.pages);
 				sem_post(&scons);
 				fflush(stdout);	
 				usleep(100*prnt.pages);
 			}
 			else if (prnt.type == 'C' && prnt.urgent == 'N'){
 				sem_wait(&scons);
-				printf("Color, %d paginas, no urgente, tiempo de envio %d [us]\n",prnt.pages, 200*prnt.pages);
+				printf("User: Color, %d paginas, no urgente, tiempo de envio %d [us]\n",prnt.pages, 200*prnt.pages);
 				sem_post(&scons);
 				fflush(stdout);	
 				usleep(200*prnt.pages);
 			}
 			else if (prnt.type == 'C' && prnt.urgent == 'S'){
 				sem_wait(&scons);
-				printf("Color, %d paginas, urgente, tiempo de envio %d [us]\n",prnt.pages, 200*prnt.pages);
+				printf("User: Color, %d paginas, urgente, tiempo de envio %d [us]\n",prnt.pages, 200*prnt.pages);
 				sem_post(&scons);	
 				fflush(stdout);	
 				usleep(200*prnt.pages);
@@ -111,8 +117,6 @@ void *user(void* arg) // pagina 170 OS_Concepts
 
 void *printer(void* arg) // pagina 170 OS_Concepts
 {  
-	int ByN=0;
-	int CLR=0;
 	int *arr = (int*) arg;
 	//close(arr[1]);
 	impresion prnt[3];
@@ -124,20 +128,58 @@ void *printer(void* arg) // pagina 170 OS_Concepts
     printf("Entered printer\n");
     
     do{
+    	
+    	int cprim = 0; //contador para ver si entra por primera vez
+    	int sem2Val;
+    	sem_getvalue(&sem2,&sem2Val);
+    	printf("%d\n",sem2Val);
+    	if(sem2Val==0)
+	    	while(1){
+	    		if(cprim==0){
+	    			sem_wait(&scons);
+					printf("Apagada\n");
+					sem_post(&scons);
+					
+				}
+				usleep(50);
+				cprim++;
+				sem_getvalue(&sem2,&sem2Val);
+				if(sem2Val>0){
+					int o = 3;
+					
+					for(o;o>0;o--){
+						usleep(100);
+						sem_wait(&scons);
+						printf(" impresora prendiendo en: %d\n",o);	
+						sem_post(&scons);	
+						fflush(stdout);					
+					}
+					break;
+				}
+				
+			}
+		cprim=0;
+		
+		
     	sem_wait(&sem2);
 		read(arr[0], prnt, 3*sizeof(impresion));
+		//printf("%d\n",a);
+		
 		//sem_post(&mutex);
 		if(prnt[0].pages !=-1 ){
 			int i=0;
-			sem_wait(&scons);
+			//?? aca o solo en printf
 			for(i;i<3;i++){
 				if (prnt[i].pages!=-2){
-					printf("impresora: %c\n",prnt[i].urgent);
-					fflush(stdout);
 					usleep(150*prnt[i].pages);
+					sem_wait(&scons);
+					printf("Impresora: Finalizado, el pedido tardo %d us\n",150*prnt[i].pages);
+					sem_post(&scons);
+					fflush(stdout);
+				//	write(imp_srv[1], &prnt[i], sizeof(impresion));
 				}
 			}
-			sem_post(&scons);
+			
 			
 		}
 	}while(prnt[0].pages !=-1);
@@ -153,21 +195,25 @@ void *printer(void* arg) // pagina 170 OS_Concepts
 
 int main()
 {
-	
-	int ByN=0;
-	int CLR=0;
-	
+	/*
 	int usr_srv[2];
 	int srv_imp[2];
+	int imp_srv[2];	
+	*/
+	
+	pipe(usr_srv);
+	pipe(srv_imp);
+	pipe(imp_srv);
+	
 	impresion arg;
+	impresion plisto;
 	sem_init(&scons, 0, 1);
     sem_init(&sem1, 0, 0);
 	sem_init(&sem2, 0, 0);
 	//sem_init(&mutex, 0, 0);
 
 
-	pipe(usr_srv);
-	pipe(srv_imp);
+	
 
 	pthread_t t1,t2;
 	
@@ -218,6 +264,25 @@ int main()
 			sem_post(&sem2);
 			//sem_post(&mutex);
 		}
+		/*
+		read(imp_srv[0], &plisto, sizeof(impresion));
+		
+		/*
+		if(plisto.pages==-1){
+			break;
+		}
+		if(plisto.type == 'B'){
+			sem_wait(&scons);
+			printf("Server: Pediodo blanco y negro, %d paginas esta listo. Monto a pagar:%d\n",plisto.pages, 10*plisto.pages);
+			sem_post(&scons);
+			fflush(stdout);	
+		}
+		else if (plisto.type == 'C'){
+			sem_wait(&scons);
+			printf("Server: Pedidio color, %d paginas esta listo. Monto a pagar: %d\n",plisto.pages, 20*plisto.pages);
+			sem_post(&scons);
+			fflush(stdout);	
+		}*/
 
 	}while(arg.pages >0 );
 	queue[0].pages=-1;
