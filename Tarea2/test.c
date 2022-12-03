@@ -33,6 +33,9 @@ void queue_init(impresion queue[]){
 	}
 }
 
+/*nombre archivo de texto*/
+char str[20];
+
 /*Función de thread que lee archivo de pedidios y los envia a proceso servidor (main)*/
 void *user(void* arg) 
 {   
@@ -48,7 +51,7 @@ void *user(void* arg)
 	char texto[20]; // array para guardar linea
 	int a = 0;
 	int i = 0;
-	ptr = fopen("test.txt", "r");
+	ptr = fopen(str, "r");
 	if (NULL == ptr) {
 		printf("file can't be opened \n");
 	}
@@ -198,8 +201,9 @@ void *printer(void* arg)
     
 }
 
-int main()
+int main(int argc, char* argv[] )
 {
+	strcpy(str,argv[1]);
 	/*
 	int usr_srv[2];
 	int srv_imp[2];
