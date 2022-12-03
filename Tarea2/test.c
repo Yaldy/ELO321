@@ -5,23 +5,25 @@
 #include <semaphore.h>
 #include <unistd.h>
 
+/*Estructura con información de pedido*/
 typedef struct impresion{
 	char type;
 	int pages;
 	char urgent;
 }impresion;
 
-
+/*Declaración de variables para pipes*/
 int usr_srv[2];
 int srv_imp[2];
 int imp_srv[2];	
 
+/*Declaración de semáforos*/
+sem_t scons; //para escribir en consola
+sem_t sem1; //para pipe user server
+sem_t sem2; //para pipe server impresora
+sem_t sem3; //para pipe imp server
 
-sem_t scons; //escribir en consola
-sem_t sem1; //pipe user server
-sem_t sem2; //pipe server impresora
-sem_t sem3; // pipe imp server
-
+/*Función para llenar cola con valores inválidos*/
 void queue_init(impresion queue[]){
 	int i=0;
 	for(i;i<3;i++){
@@ -29,12 +31,16 @@ void queue_init(impresion queue[]){
 	}
 }
 
-void *user(void* arg) // pagina 170 OS_Concepts
+/*Función de thread que lee archivo de pedidios y los envia a proceso servidor (main)*/
+void *user(void* arg) 
 {   
-	printf("Entra al user\n");
-	int *arr = (int*) arg;
+	printf("Entra al thread user...\n");
+	int *arr = (int*) arg; //casteo de argumento de entrada para pipe
+	
 	//close(arr[0]);
-	impresion prnt;
+	
+	impresion prnt;//estructura para guardar datos extraidos de archivo
+	
 	FILE* ptr; // se declara puntero para arreglo donde se guarda lo que esta en el .txt
 	char ch;
 	char texto[20]; // array para guardar linea
@@ -49,16 +55,15 @@ void *user(void* arg) // pagina 170 OS_Concepts
 		texto[a] = ch;
 		//if(texto[a] == '\n' || feof(ptr)){ // no funciona en aragorn
 		if((ch > 47 && ch < 58) || (ch > 64 && ch < 90) || ch == ','){
-			//printf("%c",ch);
+			//Para no tener problemas con editor de texto
 		}
 		else{
 			// se guardan los datos ordenados en un struct
-
 			prnt.type = strtok(texto,",")[0];
 			prnt.pages = atoi(strtok(NULL,","));
 			prnt.urgent = strtok(NULL,",")[0];
 			
-			//sem_wait(&scons);
+			//Impresión por pantalla del pedido
 			if(prnt.type == 'B' && prnt.urgent == 'N'){
 				sem_wait(&scons);
 				printf("User: Blanco y Negro, %d paginas, no urgente, tiempo de envio %d [us]\n",prnt.pages, 100*prnt.pages);
@@ -87,90 +92,84 @@ void *user(void* arg) // pagina 170 OS_Concepts
 				fflush(stdout);	
 				usleep(200*prnt.pages);
 			}
-			//sem_post(&scons);
 			
+			//rellena variable texto de '\0'
 			memset(texto, '\0', sizeof(texto));
 			a = -1;
 			
-			//sem_wait(&mutex);
-
+			//manda estructura con pedido recibido
 			write(arr[1], &prnt, sizeof(impresion));
 			sem_post(&sem1);
-			//printf("user :%d\n", prnt.pages);
-			//usleep(1000);
+			
     	}
 		a++;
 	}
-	prnt.pages =-1;
-
-	//wait
-    //sem_wait(&mutex);
-    //critical section
-    write(arr[1], &prnt, sizeof(impresion));
-    sem_post(&sem1);
-	//signal
 	
-    //printf("Just Exiting...\n");
+	
+	prnt.pages =-1;//valor invalido para avisar fin de los pedidos
+
+	//envia estructura indicando el final de los pedidos
+    write(arr[1], &prnt, sizeof(impresion)); //escribe en pipe user-server
+    sem_post(&sem1);//libera semaforo para que se pueda leer el pipe
+	
+    printf("Thread User termino...\n");
     
     
 }
 
-void *printer(void* arg) // pagina 170 OS_Concepts
+/*Función de thread que lee la cola de pedidos desde el servidor e imprime por pantalla tiempo de impresión*/
+void *printer(void* arg)
 {  
-	int *arr = (int*) arg;
+	printf("Entra al thread Printer...\n");
+	int *arr = (int*) arg; //casteo de argumento de entrada para pipe
+	
 	//close(arr[1]);
-	impresion prnt[3];
-	
-	
-	printf("thread creado..\n");
-	//wait
-    
-    printf("Entered printer\n");
+	impresion prnt[3];//estructura para guardar datos extraidos de archivo
     
     do{
     	
     	int cprim = 0; //contador para ver si entra por primera vez
-    	int sem2Val;
-    	sem_getvalue(&sem2,&sem2Val);
-    	printf("%d\n",sem2Val);
+    	int sem2Val; //variable con valor del semaforo
+    	sem_getvalue(&sem2,&sem2Val);//guarda valor del semaforo
+    	//printf("%d\n",sem2Val);
     	if(sem2Val==0)
-	    	while(1){
-	    		if(cprim==0){
+	    	while(1){//espera ocupada
+	    		if(cprim==0){//si recién entró al while(1) informa que se apagó
 	    			sem_wait(&scons);
-					printf("Apagada\n");
+					printf("Impresora: Apagada\n");
 					sem_post(&scons);
 					
 				}
 				usleep(50);
 				cprim++;
 				sem_getvalue(&sem2,&sem2Val);
-				if(sem2Val>0){
+				if(sem2Val>0){ //para prender impresora
 					int o = 3;
 					
 					for(o;o>0;o--){
-						usleep(100);
+						usleep(100);//1 seg es mucha espera
 						sem_wait(&scons);
-						printf(" impresora prendiendo en: %d\n",o);	
+						printf("impresora prendiendo en: %d\n",o);	
 						sem_post(&scons);	
 						fflush(stdout);					
 					}
-					break;
+					break;//sale de espera ocupada
 				}
 				
 			}
 		cprim=0;
 		
 		
-    	sem_wait(&sem2);
-		read(arr[0], prnt, 3*sizeof(impresion));
+    	sem_wait(&sem2);//blolquea semaforo hasta que pueda leer el pipe
+		read(arr[0], prnt, 3*sizeof(impresion)); //lee pipe server-printer
 		//printf("%d\n",a);
 		
 		//sem_post(&mutex);
-		if(prnt[0].pages !=-1 ){
+		if(prnt[0].pages !=-1 ){ //si no es estructura final,entra
 			int i=0;
 			//?? aca o solo en printf
 			for(i;i<3;i++){
-				if (prnt[i].pages!=-2){
+				if (prnt[i].pages!=-2){//si no es entructura de relleno, entra
 					usleep(150*prnt[i].pages);
 					sem_wait(&scons);
 					printf("Impresora: Finalizado, el pedido tardo %d us\n",150*prnt[i].pages);
@@ -185,10 +184,7 @@ void *printer(void* arg) // pagina 170 OS_Concepts
 	}while(prnt[0].pages !=-1);
     
 	
-    //critical section
-	
-    //signal
-    printf("Just Exiting...\n");
+    printf("Thread Printer termino...\n");
     
     
 }
@@ -201,12 +197,15 @@ int main()
 	int imp_srv[2];	
 	*/
 	
+	/*inicialización de pipes*/
 	pipe(usr_srv);
 	pipe(srv_imp);
 	pipe(imp_srv);
 	
-	impresion arg;
-	impresion plisto;
+	impresion arg; //para guadar lo que recibe del user
+	impresion plisto; //para guardar lo que recibe de la impresora
+	
+	/*inicialización de semáforos*/
 	sem_init(&scons, 0, 1);
     sem_init(&sem1, 0, 0);
 	sem_init(&sem2, 0, 0);
@@ -214,10 +213,10 @@ int main()
 
 
 	
-
+	/*variables para los threads*/
 	pthread_t t1,t2;
 	
-	
+	/*crea los threads*/
     pthread_create(&t1,NULL,user,(void*) &usr_srv);
     usleep(100);
     pthread_create(&t2,NULL,printer,(void*) &srv_imp);
@@ -226,26 +225,22 @@ int main()
 
 	//close(usr_srv[1]);
 	//close(srv_imp[0]);
-	impresion queue[3];
-	queue_init(queue);
+	//close(imp_srv[1]);
+	
+	impresion queue[3];//cola para enviar a impresora
+	queue_init(queue); //rellena cola de valores no validos
+	
 	int i =0;
 	do{
 		sem_wait(&sem1);
-		read(usr_srv[0], &arg, sizeof(impresion));
+		read(usr_srv[0], &arg, sizeof(impresion)); //lee pipe usr_srv
 		
-		//sem_post(&mutex);
 		if(arg.pages >0 ){
-			/*if(arg.type=='B'){
-				ByN++;
-			}
-			else if(arg.type=='C'){
-				CLR++;
-			}*/
+		
 			queue[i]=arg;
 			if (i==2 || arg.urgent=='S'){
-				//mandar cola a impresora
-				//sem_wait(&mutex);
-				write(srv_imp[1], queue, 3*sizeof(impresion));
+				/*mandar cola a impresora*/
+				write(srv_imp[1], queue, 3*sizeof(impresion));// escribe en pipe srv-imp
 				sem_post(&sem2);
 				i=0;
 				queue_init(queue);
@@ -259,10 +254,8 @@ int main()
 			sem_post(&scons);
 		}
 		else{
-			//sem_wait(&mutex);
 			write(srv_imp[1], queue, 3*sizeof(impresion));
 			sem_post(&sem2);
-			//sem_post(&mutex);
 		}
 		/*
 		read(imp_srv[0], &plisto, sizeof(impresion));
@@ -285,26 +278,21 @@ int main()
 		}*/
 
 	}while(arg.pages >0 );
+	
+	/*envia estructura indicando el final de los pedidos*/
 	queue[0].pages=-1;
 	write(srv_imp[1], queue, 3*sizeof(impresion));
 	sem_post(&sem2);
 	
+	/*termina los threads*/
     pthread_join(t1,NULL);
     pthread_join(t2,NULL);
+    
+    /*elimina los semaforos*/
     sem_destroy(&scons);
     sem_destroy(&sem1);
     sem_destroy(&sem2);
     //sem_destroy(&sem3);
 	
-/*	
-	while(imprimir = 1)
-		pthread_create(printer) // se crea thread para una porcion de la cola de impresion
-		
-		pthread_join // espera a que termine la impresion
-		if(ultimo elemento = 1)	// si es el ultimo elemento se sale
-			break
-*/
-
-	//printf("%d\n", arg[1].pages);
     return 0;
 }
